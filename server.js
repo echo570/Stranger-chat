@@ -1,48 +1,30 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
 const mongoose = require('mongoose');
+const socketIo = require('socket.io');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, { cors: { origin: '*' } });
 
-mongoose.connect('mongodb://localhost:27017/strangerchat', { useNewUrlParser: true, useUnifiedTopology: true });
-
-const User = mongoose.model('User', new mongoose.Schema({ username: String, password: String, isBanned: Boolean }));
-const Message = mongoose.model('Message', new mongoose.Schema({ sender: String, message: String }));
-
+app.use(express.json());
 app.use(cors());
-app.use(bodyParser.json());
 
-const secretKey = 'supersecretkey';
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.log(err));
 
-app.post('/register', async (req, res) => {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const user = new User({ username: req.body.username, password: hashedPassword, isBanned: false });
-    await user.save();
-    res.json({ message: 'User registered' });
-});
+const authRoutes = require('./routes/auth');
+const chatRoutes = require('./routes/chat');
+const adminRoutes = require('./routes/admin');
 
-app.post('/login', async (req, res) => {
-    const user = await User.findOne({ username: req.body.username });
-    if (user && await bcrypt.compare(req.body.password, user.password)) {
-        const token = jwt.sign({ username: user.username }, secretKey);
-        res.json({ token });
-    } else {
-        res.status(401).json({ message: 'Invalid credentials' });
-    }
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/admin', adminRoutes);
 
-io.on('connection', (socket) => {
-    socket.on('message', async (msg) => {
-        await new Message(msg).save();
-        io.emit('message', msg);
-    });
-});
+require('./socket/chat')(io);
 
-server.listen(5000, () => console.log('Server running on port 5000'));
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
