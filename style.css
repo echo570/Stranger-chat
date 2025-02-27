@@ -1,0 +1,42 @@
+ 
+body {
+    background: black;
+    color: lime;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    border: 2px solid lime;
+    padding: 20px;
+    width: 300px;
+}
+
+input {
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+    background: black;
+    border: 1px solid lime;
+    color: lime;
+}
+
+button {
+    width: 100%;
+    padding: 8px;
+    background: lime;
+    border: none;
+    cursor: pointer;
+}
+
+.chat-box {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid lime;
+    padding: 5px;
+    margin-bottom: 10px;
+}
